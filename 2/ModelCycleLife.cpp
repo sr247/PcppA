@@ -1,3 +1,4 @@
+//~ Compilation g++ -Wall -Wextra -o 
 #include <iomanip>
 #include <iostream>
 #include <ctime>
@@ -20,21 +21,23 @@ struct file{
 	}
 	
 	file& operator=(file&& f){
-		//~ if(descr) fclose(descr);
-		//~ descr = f.descr;
-		//~ f.descr = NULL; 
-		
-		//~ On récupere la rvalue dans une var temporele qu'on stock dans un nouvel objet de type file
-		//~ On swap le contenu de l'objet courant avec ce nouvel objet
-		//~ This contient maintenant le contenu de f par le biais de that
-		
-		file that(std::foward<file>(f));
-		that.swap(*this);
-		return *this;
+	  if(descr) fclose(descr);
+	  descr = f.descr;
+	  f.descr = NULL; 
+	  
+	  //~ On récupere la rvalue dans une var temporele qu'on stock dans un nouvel objet de type file
+	  //~ On swap le contenu de l'objet courant avec ce nouvel objet
+	  //~ This contient maintenant le contenu de f par le biais de that
+	  
+	  file that(std::forward<file>(f));
+	  that.swap(*this);
+	  return *this;
 	}
+  
 	void swap(file& other){
-		std::swap(descr, other.descr);
+	  std::swap(descr, other.descr);
 	}
+  
 	file& operator=(file const& f) = delete;
 	
 	~file(){ if(descr)fclose(descr); }
@@ -63,48 +66,62 @@ struct U {
 							v1 = t; }
 };
 
+struct F: T{
+
+  // F(){ std::cout << this << " : F Constructed from " << "None" << '\n'; }
+  // F(T const& f){ std::cout << this << " : F Constructed from " << &f << '\n'; }
+  // ~F(){ std::cout << this << " : F Destroyed " << '\n'; }
+  
+  // F& operator=(F const& f){ std :: cout << this << " : F Assigned with " << &f << '\n'; return *this; }
+  // F& operator=(F&& f){ std :: cout << this << " : F Moved from " << &f << '\n'; return *this; }
+
+
+};
+  
 void f1 ( T const & t ) {}
 void f2 ( T t ) {}
 T f3 () { return T (); }
 T f4 () { T t; return t; }
 void f5 (T &t) { t = T (); }
+F f6() { return F();}
 
 int main(int argc, char **argv){
 	
-	//~ Exercice 1 -----------------------------------------------------
-	//~ T a;
-	//~ f1 (a);
-	//~ f2 (a);
-	//~ T b = a;
+  //~ Exercice 1 -----------------------------------------------------
+  //T a;
+   //f1 (a);
+   //f2 (a);
+   //T b = a;
 	
-	//~ Elision de copie : Le compilateur à le droit de checker la sortie
-	//~ de la fonction pour simplifier le type du return doit etre le meme 
-	//~ que celui de la variable avant l'opérateur égal
-	//~ T c = f3();  
+  //~ Elision de copie : Le compilateur à le droit de checker la sortie
+  //~ de la fonction pour simplifier le type du return doit etre le meme 
+  //~ que celui de la variable avant l'opérateur égal
+  //   T c = f3();  
 	
-	//~ Named Return Value optimisation
-	//~ T d = f4();
+  //~ Named Return Value optimisation
+  //  T d = f4();
+  // T x = f6();
+  //~ Passage par référence : t est déja construit alors on crée un temporaire et on affect t avec
+  // f5 (d);
+   //U e(a);
+  //~ ----------------------------------------------------------------
 	
-	//~ Passage par référence : t est déja construit alors on crée un temporaire et on affect t avec
-	//~ f5 (d);
-	//~ U e(a);
-	//~ ----------------------------------------------------------------
+  //~ Exercice 2 -----------------------------------------------------	
+  file f ("test1.txt");
+  f.write ("first string for test1\n");
+  file g("test2.txt ");
+  g.write("first string for test2\n");
+  f.write("second string for test1\n");
 	
-	//~ Exercice 2 -----------------------------------------------------	
-	file f ("test1.txt");
-	f.write ("first string for test1\n");
-	file g("test2.txt ");
-	g.write("first string for test2\n");
-	f.write("second string for test1\n");
+  //~ Wrong : par sécurité on a interdit la création par défaut du 
+  //~ constructeur par copie de la classe file
+  //file h(f);
+  // file p = g;
 	
-	//~ Wrong : par sécurité on a interdit la création par défaut du 
-	//~ constructeur par copie de la classe file
-	//~ file h(f); file p = g;
-	
-	//~ Ici grace au constructeur par défaut avec rvalue on peut ré-exploiter 
-	//~ la valeur de f en transferant le pointeur descr de f vers h;
-	file h(std::move(f)); 
-	//~ ----------------------------------------------------------------
+  //~ Ici grace au constructeur par défaut avec rvalue on peut ré-exploiter 
+  //~ la valeur de f en transferant le pointeur descr de f vers h;
+  file h(std::move(f)); 
+  //~ ----------------------------------------------------------------
 	
 	return 0;
 }
